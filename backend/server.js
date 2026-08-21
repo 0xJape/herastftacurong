@@ -399,7 +399,7 @@ app.post('/api/cycles', (req, res) => {
   const excludeId = duplicate?.id || 0;
   if (findCycleOverlap.get({ userId, startDate, rangeEnd: normalizedEndDate || startDate, excludeId })) return res.status(409).json({ error: 'period range overlaps an existing record' });
   const values = { id: excludeId, userId, startDate, endDate: normalizedEndDate, notes: notes.trim(), now: new Date().toISOString() };
-  const cycle = duplicate ? updateCycle.get(values) : createCycle.get(values);
+  const cycle = duplicate ? updateCycle.get(values) : createCycle.get({ userId, startDate, endDate: normalizedEndDate, notes: notes.trim(), now: values.now });
   res.status(duplicate ? 200 : 201).json({ cycle });
 });
 
@@ -435,6 +435,11 @@ app.get('/api/cycles/:userId', (req, res) => {
   const limit = Number.isFinite(requestedLimit) ? Math.min(Math.max(requestedLimit, 1), 100) : 24;
   const cycles = getCycles.all(userId, limit);
   res.json({ cycles, count: cycles.length, summary: cycleSummary(cycles) });
+});
+
+app.use((error, _req, res, _next) => {
+  console.error(error);
+  res.status(500).json({ error: 'Internal server error' });
 });
 
 app.listen(port, '0.0.0.0', () => {
