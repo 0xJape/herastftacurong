@@ -158,7 +158,7 @@ cd backend
 npm start
 ```
 
-Open <http://localhost:3000>.
+Open <http://localhost:3000/homepage>.
 
 `start.bat` stops any existing listener on port `3000`, starts the backend, and opens HERA in the default browser.
 
@@ -178,13 +178,13 @@ Restart backend after changing `.env`. Never commit `.env` or expose Groq key in
 Keep backend running and connect computer plus phone to same private Wi-Fi. Open computer address from Android Chrome:
 
 ```text
-http://COMPUTER-NAME.local:3000
+http://COMPUTER-NAME.local:3000/homepage
 ```
 
 If `.local` resolution fails, use computer IPv4 address:
 
 ```text
-http://192.168.1.20:3000
+http://192.168.1.20:3000/homepage
 ```
 
 All phones use computer hostname/IP—not phone hostname. Full PWA installation and service-worker behavior require HTTPS outside `localhost`; plain LAN HTTP may provide only a home-screen shortcut.

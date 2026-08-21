@@ -214,11 +214,14 @@ function cycleSummary(cycles) {
 
 app.use(cors());
 app.use(express.json({ limit: '8kb' }));
-app.use(express.static(path.join(root, '..', 'frontend')));
+const frontendRoot = path.join(root, '..', 'frontend');
 
 app.get('/', (_req, res) => {
-  res.json({ name: 'HERA backend', status: 'ok' });
+  res.redirect('/homepage');
 });
+
+app.get('/homepage', (_req, res) => res.sendFile(path.join(frontendRoot, 'index.html')));
+app.use(express.static(frontendRoot));
 
 app.post('/api/wearable/readings', (req, res) => {
   const { deviceId, wearing, heartRate, heartRateValid, spo2, activity, movementLevel, uptimeMs } = req.body;

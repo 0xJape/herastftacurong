@@ -3,4 +3,4 @@ for /f "tokens=5" %%P in ('netstat -ano ^| findstr /r /c:":3000 .*LISTENING"') d
 cd /d "%~dp0backend"
 start "HERA Backend" cmd /k "npm start"
 timeout /t 2 /nobreak >nul
-start "" "http://localhost:3000"
+start "" "http://localhost:3000/homepage"

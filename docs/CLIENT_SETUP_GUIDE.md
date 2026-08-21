@@ -43,7 +43,7 @@ No frontend API URL needs changing. Browser requests use the same host that serv
 3. Run `npm install`.
 4. Return to the main `HERA` folder.
 5. Double-click `start.bat`.
-6. Confirm the browser opens `http://localhost:3000`.
+6. Confirm the browser opens `http://localhost:3000/homepage`.
 
 `start.bat` stops an existing listener on port `3000`, starts the HERA backend, and opens the local app. Keep the **HERA Backend** window open while HERA is in use.
 
@@ -76,7 +76,7 @@ Every phone uses the HERA **computer's** address, not the phone's hostname.
 4. In Android Chrome, try:
 
 ```text
-http://COMPUTER-NAME.local:3000
+http://COMPUTER-NAME.local:3000/homepage
 ```
 
 Example:
@@ -92,7 +92,7 @@ If `.local` does not resolve:
 3. Open that address on the phone, for example:
 
 ```text
-http://192.168.1.20:3000
+http://192.168.1.20:3000/homepage
 ```
 
 All phones on the permitted local network can use the same computer address. For a reliable installation, reserve the computer's IPv4 address in the router or use production HTTPS hosting.
@@ -178,7 +178,7 @@ Keep launcher artwork square. Production Android PWAs work best with dedicated 1
 ## 10. Acceptance checklist
 
 - [ ] `npm install` completes without errors.
-- [ ] `start.bat` opens HERA at `http://localhost:3000`.
+- [ ] `start.bat` opens HERA at `http://localhost:3000/homepage`.
 - [ ] Phone opens HERA through computer hostname or LAN IP.
 - [ ] Daily check-in saves and reloads.
 - [ ] Cycle entry saves and appears in history.

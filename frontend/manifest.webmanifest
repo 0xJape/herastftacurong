@@ -2,8 +2,8 @@
   "name": "HERA Personal Health Companion",
   "short_name": "HERA",
   "description": "Non-diagnostic menstrual health and wearable wellness companion.",
-  "id": "/",
-  "start_url": "/#home",
+  "id": "/homepage",
+  "start_url": "/homepage",
   "scope": "/",
   "display": "standalone",
   "display_override": ["window-controls-overlay", "standalone"],
@@ -23,12 +23,12 @@
     {
       "name": "Daily check-in",
       "short_name": "Check in",
-      "url": "/#checkin"
+      "url": "/homepage#checkin"
     },
     {
       "name": "Cycle tracker",
       "short_name": "Cycle",
-      "url": "/#cycle"
+      "url": "/homepage#cycle"
     }
   ]
 }
