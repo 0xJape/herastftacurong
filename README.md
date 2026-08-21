@@ -100,7 +100,7 @@ flowchart LR
 | Layer | Technologies |
 |---|---|
 | Frontend | HTML5, CSS, vanilla JavaScript, Fetch API, SVG, Web App Manifest, Service Worker, Cache API, Local Storage |
-| Backend | Node.js ES modules, Express 4, `better-sqlite3`, `cors` |
+| Backend | Node.js ES modules, built-in `node:sqlite`, Express 4, `cors` |
 | Database | SQLite with WAL mode |
 | AI | Groq OpenAI-compatible Chat Completions API |
 | Firmware | Arduino/C++, ESP32-S3, Wi-Fi, HTTPClient, ESP sleep APIs |
