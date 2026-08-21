@@ -1,0 +1,82 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#8b002f">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="apple-mobile-web-app-title" content="HERA">
+  <title>HERA | Personal Health Companion</title>
+  <link rel="icon" type="image/jpeg" href="assets/HERA_LOGO.jpg">
+  <link rel="apple-touch-icon" href="assets/HERA_LOGO.jpg">
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css?v=11">
+  <style>
+    [hidden]{display:none!important}
+    #silk{filter:hue-rotate(72deg) saturate(1.45)}
+    .brand-logo{width:48px;height:48px;border-radius:50%;object-fit:cover;box-shadow:0 4px 18px rgba(2,1,10,.24)}
+    .trend{min-height:180px;margin-top:12px}.trend svg{display:block;width:100%;height:auto;overflow:visible}.trend svg text{fill:#7c6870;font:11px Poppins,sans-serif}.trend.large{min-height:220px}.trend.large svg{max-height:240px}.period-date-fields{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}.period-date-fields label{display:grid;gap:8px;padding:16px;border:1px solid #f0dfe6;border-radius:16px;background:#fffafd}.period-date-fields input{width:100%;min-height:48px;padding:10px;border:1px solid #dbcbd1;border-radius:12px;color:#27171d;background:#fff}.period-date-fields small{color:#7c6870}.period-date-fields em{font-style:normal;color:#7c6870;font-weight:500}.period-duration{padding:12px 16px;border-radius:12px;color:#8b002f;background:#fff0f5}.cycle-history-row>span:first-child{display:grid;gap:3px}.cycle-duration{font-size:12px;color:#7c6870;font-weight:500}
+    @media (max-width:800px){
+      .app-main{padding-bottom:calc(92px + env(safe-area-inset-bottom))}.period-date-fields{grid-template-columns:1fr}
+      .mobile-nav{display:grid!important;position:fixed;z-index:1000;left:0;right:0;bottom:0;height:auto;min-height:72px;padding:8px 8px calc(8px + env(safe-area-inset-bottom));background:rgba(255,255,255,.97);border-top:1px solid #f0dfe6;box-shadow:0 -10px 30px rgba(89,0,37,.13)}
+      .mobile-nav::-webkit-scrollbar{display:none}
+      .mobile-nav .nav-link{min-width:0;min-height:56px;padding:6px 4px;border-radius:14px;justify-content:center;color:#7c6870}
+      .mobile-nav .nav-link.active{color:#8b002f;background:#fff0f5}
+      .mobile-nav .nav-link span:first-child{font-size:20px}
+      .mobile-nav .nav-link span:last-child{max-width:100%;overflow:hidden;font-size:10px;white-space:nowrap;text-overflow:ellipsis}
+      .mobile-nav{grid-template-columns:repeat(5,minmax(0,1fr))!important;left:10px!important;right:10px!important;bottom:max(10px,env(safe-area-inset-bottom))!important;height:68px!important;padding:7px!important;overflow:visible!important;border:1px solid #f0dfe6!important;border-radius:22px!important}
+      .mobile-nav .nav-link,.mobile-nav .more-button{min-width:0!important;min-height:54px;padding:5px 2px;border:0;border-radius:16px;justify-content:center;color:#7c6870;background:transparent}
+      .mobile-nav .more-button{display:flex;flex-direction:column;align-items:center;gap:3px}.mobile-nav .more-button span:first-child{font-size:18px}.mobile-nav .more-button span:last-child{font-size:10px}
+      .mobile-more{position:fixed;z-index:1100;inset:0}.more-backdrop{position:absolute;inset:0;border:0;background:rgba(39,23,29,.42)}.more-sheet{position:absolute;left:0;right:0;bottom:0;padding:10px 20px calc(24px + env(safe-area-inset-bottom));border-radius:28px 28px 0 0;background:#fff;box-shadow:0 -20px 60px rgba(39,23,29,.2)}.more-handle{width:42px;height:4px;margin:0 auto 16px;border-radius:4px;background:#dbcbd1}.more-head{display:flex;align-items:center;justify-content:space-between}.more-head h2{margin:0}.more-head button{width:42px;height:42px;border:0;border-radius:50%;font-size:24px;color:#8b002f;background:#fff0f5}.more-links{display:grid;gap:8px;margin-top:16px}.more-links .nav-link{display:flex;align-items:center;gap:14px;min-height:56px;padding:12px 16px;border-radius:16px;color:#27171d;text-decoration:none;background:#fff7fa}.more-links .nav-link span:first-child{display:grid;place-items:center;width:34px;height:34px;border-radius:12px;color:#8b002f;background:#fff0f5}
+    }
+  </style>
+</head>
+<body>
+  <section class="welcome" id="welcome" aria-labelledby="welcome-title">
+    <canvas id="silk" aria-hidden="true"></canvas><div class="welcome-shade" aria-hidden="true"></div>
+    <header class="welcome-header"><a class="welcome-brand" href="#welcome" aria-label="HERA home"><img class="brand-logo" src="assets/HERA_LOGO.jpg" alt=""><span>HERA</span></a><span class="welcome-kicker">Health, understood</span></header>
+    <main class="hero"><p class="eyebrow">Your body. Your rhythm. Your care.</p><h1 id="welcome-title">Health insight that moves <em>with you.</em></h1><p class="hero-copy">HERA brings cycle awareness and live wearable signals into one calm, private space—helping you notice what your body is telling you.</p><button class="enter-button" id="enter-dashboard" type="button">Enter dashboard <span aria-hidden="true">→</span></button><p class="hero-note"><span aria-hidden="true">✦</span> Informational wellness support, never a diagnosis.</p></main>
+    <div class="scroll-cue" aria-hidden="true"><span></span>Explore HERA</div>
+  </section>
+  <div class="app-shell" id="app" hidden>
+    <aside class="sidebar"><a class="brand" href="#home" data-page-link="home" aria-label="HERA dashboard"><img class="brand-logo" src="assets/HERA_LOGO.jpg" alt=""><span>HERA</span></a><nav class="side-nav" aria-label="Primary navigation"></nav><div class="sidebar-note"><span>♡</span><strong>Health, held gently.</strong><small>Non-diagnostic wellness guidance.</small></div></aside>
+    <main class="app-main"><header class="topbar"><div><p class="eyebrow dark" id="page-eyebrow">OVERVIEW</p><h1 id="page-title">Good day</h1></div><div class="top-actions"><div class="live-state" id="status" role="status"><i></i><span>Connecting…</span></div><button class="icon-button" id="refresh" type="button" aria-label="Refresh wearable data">↻</button><div class="notifications"><button class="notification-button" id="notification-button" type="button" aria-label="Open notifications" aria-expanded="false" aria-controls="notification-panel"><span aria-hidden="true">♢</span><b id="notification-badge" hidden>0</b></button><section class="notification-panel" id="notification-panel" aria-labelledby="notification-title" hidden><header><div><p class="card-label">INBOX</p><h2 id="notification-title">Notifications</h2></div><button type="button" id="notification-read">Mark all read</button></header><div class="notification-list" id="notification-list" role="list"></div><footer>Generated from current HERA data on this device.</footer></section></div><button class="avatar" type="button" data-go="profile" aria-label="Open profile">HE</button></div></header><div id="page-content" tabindex="-1"></div></main>
+    <button class="assistant-launcher" id="assistant-launcher" type="button" aria-label="Open HERA Assistant" aria-expanded="false" aria-controls="assistant-panel"><span class="assistant-launcher-core" aria-hidden="true"><i></i></span><b>Ask HERA</b></button>
+    <section class="assistant-panel" id="assistant-panel" role="dialog" aria-modal="true" aria-labelledby="assistant-title" hidden>
+      <header class="assistant-header"><span class="assistant-orb" aria-hidden="true"><i></i></span><div><h2 id="assistant-title">HERA <small>AI</small></h2><p><i aria-hidden="true"></i> Neural wellness companion · Online</p></div><button id="assistant-close" type="button" aria-label="Close HERA Assistant">×</button></header>
+      <div class="assistant-messages" id="assistant-messages" role="log" aria-live="polite" aria-relevant="additions"><div class="assistant-message assistant-message-bot">Hi, I’m HERA. I can help explain your available cycle, symptoms, wellness, nutrition, and HERA results. My guidance is informational and non-diagnostic, not medical care.</div></div>
+      <div class="assistant-prompts" aria-label="Suggested prompts"><button type="button">Cycle</button><button type="button">Symptoms</button><button type="button">Wellness</button><button type="button">Nutrition</button><button type="button">HERA results</button></div>
+      <form class="assistant-form" id="assistant-form"><label class="sr-only" for="assistant-input">Message HERA Assistant</label><textarea id="assistant-input" maxlength="2000" rows="2" placeholder="Ask about your HERA data…" required></textarea><button type="submit" aria-label="Send message">➤</button></form>
+      <p class="assistant-status" id="assistant-status" role="status"></p><footer>Informational wellness support only. Not diagnosis or emergency care.</footer>
+    </section>
+    <div class="checkin-reminder" id="checkin-reminder" hidden><div class="checkin-reminder-backdrop" aria-hidden="true"></div><section role="dialog" aria-modal="true" aria-labelledby="checkin-reminder-title" aria-describedby="checkin-reminder-copy"><span class="checkin-reminder-icon" aria-hidden="true">☀</span><p class="card-label">DAILY CHECK-IN</p><h2 id="checkin-reminder-title">How are you feeling today?</h2><p id="checkin-reminder-copy">A quick check-in helps HERA understand your wellness patterns. It takes about one minute.</p><div><button class="primary-button" id="checkin-reminder-go" type="button">Check in now</button><button class="text-button" id="checkin-reminder-later" type="button">Not now</button></div><small>Your answers are self-reported wellness data, not a medical assessment.</small></section></div>
+    <nav class="mobile-nav" aria-label="Mobile navigation"></nav>
+    <div class="mobile-more" id="mobile-more" hidden>
+      <button class="more-backdrop" type="button" data-close-more aria-label="Close navigation menu"></button>
+      <section class="more-sheet" role="dialog" aria-modal="true" aria-labelledby="more-title">
+        <div class="more-handle" aria-hidden="true"></div>
+        <div class="more-head"><h2 id="more-title">More</h2><button type="button" data-close-more aria-label="Close navigation menu">×</button></div>
+        <nav class="more-links" aria-label="More sections"></nav>
+      </section>
+    </div>
+    <aside class="install-app" id="install-app" role="status" hidden><img src="assets/HERA_LOGO.jpg" alt=""><div><strong>Install HERA</strong><span>Add HERA to your Android home screen.</span></div><button class="primary-button" id="install-app-button" type="button">Install</button><button class="install-app-close" id="install-app-close" type="button" aria-label="Dismiss install prompt">×</button></aside>
+  </div>
+  <template id="home-template"><section class="dashboard-grid">
+    <article class="card cycle-card span-2"><div class="card-head"><div><p class="card-label">CURRENT CYCLE</p><h2>Day <span data-cycle-day>--</span> <small>of your cycle</small></h2></div><span class="phase-pill" data-cycle-status>Not logged</span></div><div class="cycle-track"><i></i></div><p class="muted" data-cycle-detail>Log cycle details to unlock phase-aware guidance.</p><button class="text-button" data-go="cycle">Open cycle tracker →</button></article>
+    <article class="card wellness-card"><p class="card-label">WELLNESS</p><div class="score-ring"><strong data-wellness-score>--</strong><span data-wellness-label>Not calculated</span></div><p class="muted center" data-wellness-detail>Complete a daily check-in to begin.</p></article>
+    <article class="card heart-card sensor-card sensor-heart"><span class="sensor-live"><i></i> LIVE</span><div class="heart-stage" aria-hidden="true"><div class="heart-3d">♥</div><div class="heart-rings"></div></div><div class="sensor-copy"><p class="card-label">HEART RATE <small>HR-01</small></p><p class="metric"><span data-reading="heartRate">--</span> <small>BPM</small></p><p class="muted">Optical pulse telemetry</p><span class="sensor-wave" aria-hidden="true"></span></div></article>
+    <article class="card metric-card sensor-card sensor-oxygen"><span class="sensor-live"><i></i> LIVE</span><span class="metric-icon oxygen">O₂</span><p class="card-label">BLOOD OXYGEN <small>OX-02</small></p><p class="metric"><span data-reading="spo2">--</span> <small>%</small></p><p class="muted">SpO₂ optical estimate</p><span class="sensor-bars" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i></span></article>
+    <article class="card metric-card sensor-card sensor-activity"><span class="sensor-live"><i></i> LIVE</span><div class="activity-data"><span class="metric-icon">⌁</span><p class="card-label">ACTIVITY <small>MV-03</small></p><p class="metric compact" data-reading="activity">--</p><p class="muted">Motion classification</p></div><div class="activity-avatar" data-activity-avatar="unknown" aria-hidden="true"><span class="avatar-shadow"></span><span class="avatar-chair"><i></i><b></b></span><span class="avatar-human"><i class="avatar-head"></i><i class="avatar-body"></i><i class="avatar-arm left"></i><i class="avatar-arm right"></i><i class="avatar-leg left"></i><i class="avatar-leg right"></i><i class="avatar-book"></i></span><span class="avatar-track"></span></div></article>
+    <article class="card metric-card sensor-card sensor-device"><span class="sensor-live"><i></i> LINK</span><span class="metric-icon device">⌚</span><p class="card-label">WEAR STATUS <small>DV-04</small></p><p class="metric compact" data-reading="wearing">--</p><p class="muted" data-reading="deviceId">Device unavailable</p><span class="sensor-gridline" aria-hidden="true"></span></article>
+    <article class="card insight-card span-2"><div class="insight-icon">✦</div><div><p class="card-label">HERA INSIGHT</p><h2>Build your personal baseline</h2><p>Wear your HERA device and add daily check-ins. Insights remain unavailable until enough real data exists.</p><span class="preview-badge">Planned insight</span></div></article>
+    <article class="card span-2"><div class="card-head"><div><p class="card-label">TODAY</p><h2>Quick actions</h2></div></div><div class="quick-actions"><button data-go="checkin"><span>☀</span>Daily check-in<small>Mood, energy & sleep</small></button><button data-go="cycle"><span>◯</span>Log period<small>Update cycle history</small></button><button data-go="health"><span>♥</span>Health & nutrition<small>Wearable signals, water & guidance</small></button></div></article>
+    <article class="card span-2"><div class="card-head"><div><p class="card-label">REMINDERS</p><h2>What needs attention</h2></div></div><div class="data-list" id="home-reminders"><div class="data-row"><span>Loading your status…</span><strong>•••</strong></div></div></article>
+  </section></template>
+  <script src="silk.js?v=2"></script><script src="assistant-ui.js?v=2"></script><script src="app.js?v=8"></script><script src="notifications-ui.js?v=3"></script><script src="profile-ui.js?v=1"></script><script src="checkin-reminder.js?v=1"></script><script src="checkin-ui.js?v=1"></script><script src="analytics-ui.js?v=3"></script><script src="period-ui.js?v=2"></script><script src="nutrition-ui.js?v=4"></script><script src="pwa.js?v=1"></script>
+</body>
+</html>

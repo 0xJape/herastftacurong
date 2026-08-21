@@ -1,0 +1,34 @@
+{
+  "name": "HERA Personal Health Companion",
+  "short_name": "HERA",
+  "description": "Non-diagnostic menstrual health and wearable wellness companion.",
+  "id": "/",
+  "start_url": "/#home",
+  "scope": "/",
+  "display": "standalone",
+  "display_override": ["window-controls-overlay", "standalone"],
+  "background_color": "#fff8fb",
+  "theme_color": "#8b002f",
+  "orientation": "portrait-primary",
+  "categories": ["health", "lifestyle"],
+  "icons": [
+    {
+      "src": "assets/HERA_LOGO.jpg",
+      "sizes": "any",
+      "type": "image/jpeg",
+      "purpose": "any maskable"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Daily check-in",
+      "short_name": "Check in",
+      "url": "/#checkin"
+    },
+    {
+      "name": "Cycle tracker",
+      "short_name": "Cycle",
+      "url": "/#cycle"
+    }
+  ]
+}
