@@ -50,7 +50,7 @@
 // ============================================================
 // WIFI / BACKEND UPLOAD
 // ============================================================
-const char* WEBSITE_API_URL = "http://jaypee.local:3000/api/wearable/readings";
+const char* WEBSITE_API_URL = "http://kthreenah.local:3000/api/wearable/readings";
 const char* DEVICE_ID = "HERA-001";
 
 bool wifiConnected = false;

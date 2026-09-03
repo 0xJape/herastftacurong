@@ -9,6 +9,24 @@
     const { cycles, summary } = await response.json();
     const disclaimer = document.querySelector('.cycle-disclaimer');
     if (disclaimer && summary.phaseModel === 'provisional-28-day') disclaimer.textContent = 'Phase colors use a provisional 28-day model until enough personal history exists. They are estimates only—not medical advice, fertility guidance, or contraception guidance. Personalized period prediction still needs at least three valid period starts.';
+    const comparison = summary.comparison;
+    const firstRow = rows[0];
+    if (comparison && firstRow && !document.querySelector('.cycle-comparison')) {
+      const notice = document.createElement('p');
+      notice.className = 'cycle-comparison';
+      const difference = Math.abs(comparison.differenceDays);
+      notice.textContent = comparison.status === 'on-time'
+        ? `Latest cycle was on time (${comparison.currentLength} days; recent baseline ${comparison.baselineLength} days).`
+        : `Latest cycle started ${difference} day${difference === 1 ? '' : 's'} ${comparison.status} compared with your recent baseline.`;
+      firstRow.before(notice);
+    }
+    if (summary.lateStatus && firstRow && !document.querySelector('.cycle-late-advisory')) {
+      const warning = document.createElement('p');
+      warning.className = 'cycle-late-advisory';
+      warning.setAttribute('role', 'status');
+      warning.textContent = `${summary.lateStatus.days} day${summary.lateStatus.days === 1 ? '' : 's'} beyond your predicted range. ${summary.lateStatus.advisory} This is informational, not a diagnosis.`;
+      firstRow.before(warning);
+    }
     rows.forEach(row => {
       row.dataset.durationReady = 'true';
       const id = Number(row.querySelector('[data-cycle-edit]')?.dataset.cycleEdit);

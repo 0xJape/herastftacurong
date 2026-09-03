@@ -196,6 +196,15 @@ function cycleSummary(cycles) {
   const latest = cycles.find(cycle => cycle.startDate <= today) || null;
   const cycleDay = latest ? daysBetween(latest.startDate, today) + 1 : null;
   const intervals = cycles.slice(0, -1).map((cycle, index) => daysBetween(cycles[index + 1].startDate, cycle.startDate)).filter(days => days >= 15 && days <= 60).slice(0, 6);
+  const comparison = (() => {
+    if (intervals.length < 2) return null;
+    const currentLength = intervals[0];
+    const prior = intervals.slice(1);
+    const baselineLength = Math.round(prior.reduce((sum, days) => sum + days, 0) / prior.length);
+    const differenceDays = currentLength - baselineLength;
+    const status = differenceDays <= -3 ? 'early' : differenceDays >= 3 ? 'late' : 'on-time';
+    return { status, currentLength, baselineLength, differenceDays };
+  })();
   const phaseSummary = cycleLength => {
     if (!latest) return { phaseAvailable: false, phaseModel: null, estimatedCycleEnd: null, estimatedOvulationWindow: null, currentEstimatedPhase: null };
     const ovulationDay = Math.max(1, cycleLength - 14);
@@ -203,13 +212,15 @@ function cycleSummary(cycles) {
     const currentEstimatedPhase = cycleDay > cycleLength ? 'Beyond estimated cycle range' : cycleDay >= ovulationDay + 2 ? 'Estimated luteal phase' : cycleDay >= ovulationDay - 1 ? 'Estimated ovulation window' : cycleDay > 5 ? 'Estimated follicular phase' : 'Recorded/estimated period phase';
     return { phaseAvailable: true, phaseModel: cycleLength === 28 ? 'provisional-28-day' : 'recorded-average', estimatedCycleEnd: addDays(latest.startDate, cycleLength - 1), estimatedOvulationWindow: { start: addDays(ovulationCenter, -1), end: addDays(ovulationCenter, 1) }, currentEstimatedPhase };
   };
-  if (cycles.length < 3 || intervals.length < 2) return { cycleDay, averageCycleLength: null, variabilityDays: null, predictionAvailable: false, predictedStart: null, predictedRange: null, ...phaseSummary(28) };
+  if (cycles.length < 3 || intervals.length < 2) return { cycleDay, comparison, averageCycleLength: null, variabilityDays: null, predictionAvailable: false, predictedStart: null, predictedRange: null, lateStatus: null, ...phaseSummary(28) };
   const mean = intervals.reduce((sum, days) => sum + days, 0) / intervals.length;
   const averageCycleLength = Math.round(mean);
   const variabilityDays = Math.round(Math.sqrt(intervals.reduce((sum, days) => sum + (days - mean) ** 2, 0) / intervals.length) * 10) / 10;
   const uncertainty = Math.max(2, Math.ceil(variabilityDays));
   const predictedStart = addDays(latest.startDate, averageCycleLength);
-  return { cycleDay, averageCycleLength, variabilityDays, predictionAvailable: true, predictedStart, predictedRange: { start: addDays(predictedStart, -uncertainty), end: addDays(predictedStart, uncertainty), uncertaintyDays: uncertainty }, ...phaseSummary(averageCycleLength) };
+  const lateDays = Math.max(0, daysBetween(addDays(predictedStart, uncertainty), today));
+  const lateStatus = lateDays >= 7 ? { level: 'significant', days: lateDays, advisory: 'If pregnancy is possible, consider taking a pregnancy test. Consult a qualified healthcare professional if the delay continues or concerns you.' } : lateDays > 0 ? { level: 'late', days: lateDays, advisory: 'Cycle timing can vary. Continue tracking and consult a qualified healthcare professional if the delay persists or concerns you.' } : null;
+  return { cycleDay, comparison, averageCycleLength, variabilityDays, predictionAvailable: true, predictedStart, predictedRange: { start: addDays(predictedStart, -uncertainty), end: addDays(predictedStart, uncertainty), uncertaintyDays: uncertainty }, lateStatus, ...phaseSummary(averageCycleLength) };
 }
 
 app.use(cors());
