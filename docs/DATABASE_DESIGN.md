@@ -43,6 +43,9 @@ Stores reminders and alerts.
 ### ai_conversations
 Stores HERA AI Assistant interactions.
 
+### prediction_snapshots
+Stores account-scoped, immutable analytics results for stability comparison. Each row includes prediction date, deterministic algorithm version, content signature, JSON result, and creation time. Duplicate results for the same account/date/version are ignored.
+
 ## Relationships
 
 ```text

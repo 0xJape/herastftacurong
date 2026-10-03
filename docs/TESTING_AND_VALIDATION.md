@@ -65,6 +65,8 @@ Test:
 
 **Wearable → Backend → Database → Analytics → Frontend**
 
+Phase 4 deterministic checks cover personal baseline thresholds, poor-quality filtering, missing data, trend minimum samples/direction, relationship overlap/strength, multi-signal deviations, symptom recurrence, and safety wording. `npm test` runs these checks without network or LLM dependencies. Server validation also includes JavaScript syntax, SQLite migration startup, authenticated account isolation, empty/learning states, and stale service-worker asset checks.
+
 and:
 
 **Frontend → Backend → Groq → Frontend**

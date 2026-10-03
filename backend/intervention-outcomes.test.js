@@ -1,0 +1,21 @@
+import assert from 'node:assert/strict';
+import { buildInterventionOutcome, compareInterventionMetric } from './intervention-outcomes.js';
+
+const rows = values => values.map((value, index) => ({ date: `2026-09-${String(index + 1).padStart(2, '0')}`, value, reliable: true }));
+const success = compareInterventionMetric('wellness', rows([40, 50, 60]), rows([60, 70, 80]));
+assert.equal(success.status, 'available');
+assert.equal(success.absoluteChange, 20);
+assert.equal(success.percentageChange, 40);
+assert.equal(success.confidence, 'moderate');
+assert.equal(success.before.coveragePercent, 100);
+assert.equal(compareInterventionMetric('wellness', rows([50, 55]), rows([60, 65, 70])).status, 'insufficient-data');
+assert.equal(compareInterventionMetric('wellness', [], rows([60, 65, 70])).status, 'missing-data');
+const uneven = compareInterventionMetric('wellness', rows([1, 2, 3]), rows([1, 2, 3, 4, 5, 6, 7]), 3, 7);
+assert.equal(uneven.confidence, 'limited');
+assert.match(uneven.limitation, /uneven/i);
+assert.equal(compareInterventionMetric('wellness', rows([0, 0, 0]), rows([1, 1, 1])).percentageChange, null);
+assert.equal(compareInterventionMetric('wellness', [...rows([1, 2, 3]), { date: '2026-09-01', value: 99 }], rows([2, 3, 4])).before.sampleCount, 3);
+const partial = buildInterventionOutcome({ id: 7, metrics: ['wellness', 'spo2'], comparisonWindowDays: 3, beforeWindow: { start: '2026-09-01', end: '2026-09-03' }, afterWindow: { start: '2026-09-04', end: '2026-09-06' } }, { wellness: { before: rows([1, 2, 3]), after: rows([2, 3, 4]) }, spo2: { before: [], after: [] } });
+assert.equal(partial.status, 'partial');
+assert.match(partial.disclaimer, /do not prove/i);
+console.log('intervention outcome checks passed');

@@ -44,13 +44,17 @@
 
 #include <WiFi.h>
 #include <HTTPClient.h>
-#include "secrets.h"
 
 
 // ============================================================
 // WIFI / BACKEND UPLOAD
 // ============================================================
-const char* WEBSITE_API_URL = "http://kthreenah.local:3000/api/wearable/readings";
+// NOTE: Move these into a separate "secrets.h" (excluded via .gitignore)
+// if you ever push this sketch to GitHub or share it - don't commit
+// real WiFi credentials to a public repo.
+const char* WIFI_SSID     = "PLDTHOMEFIBRxSQ9R";
+const char* WIFI_PASSWORD = "GayoFamily@2025!";
+const char* WEBSITE_API_URL = "http://jaypee.local:3000/api/wearable/readings";
 const char* DEVICE_ID = "HERA-001";
 
 bool wifiConnected = false;
@@ -62,6 +66,8 @@ const unsigned long WIFI_CHECK_INTERVAL = 15000;  // re-check every 15s
 const unsigned long WIFI_CONNECT_TIMEOUT_MS = 10000;
 unsigned long lastUpload = 0;
 const unsigned long UPLOAD_INTERVAL_MS = 5000;
+unsigned long lastSensorLog = 0;
+const unsigned long SENSOR_LOG_INTERVAL_MS = 2000;
 
 
 // ============================================================
@@ -126,7 +132,7 @@ unsigned long lastDisplayUpdate = 0;
 unsigned long lastIMUUpdate     = 0;
 unsigned long lastSpO2Update    = 0;
 
-const unsigned long DISPLAY_INTERVAL = 100;  // 10 FPS
+const unsigned long DISPLAY_INTERVAL = 5000;  // refresh displayed readings every 5s
 const unsigned long IMU_INTERVAL     = 20;   // 50 Hz
 const unsigned long SPO2_INTERVAL    = 500;  // 2 Hz
 
@@ -148,11 +154,12 @@ const unsigned long LONG_PRESS_MS = 700;
 // MAX30102 WEAR DETECTION
 // ============================================================
 #define IR_WEAR_THRESHOLD 50000
+#define IR_REMOVE_THRESHOLD 35000
 bool wearing = false;
 unsigned long wearStartTime = 0;
 unsigned long removalStartTime = 0;
-const unsigned long WEAR_CONFIRM_TIME = 400;
-const unsigned long REMOVE_CONFIRM_TIME = 600;
+const unsigned long WEAR_CONFIRM_TIME = 150;
+const unsigned long REMOVE_CONFIRM_TIME = 2000;
 
 
 // ============================================================
@@ -168,6 +175,8 @@ int hrHistoryIndex = 0;
 int hrHistoryCount = 0;
 
 long lastBeatTime = 0;
+unsigned long lastHeartRatePublish = 0;
+const unsigned long HEART_RATE_PUBLISH_INTERVAL = 5000;
 
 // Heartbeat NeoPixel pulse
 bool heartbeatFlashActive = false;
@@ -188,6 +197,7 @@ int32_t calculatedSpO2 = 0;
 int8_t validSpO2 = 0;
 int8_t validHeartRateFromSpO2 = 0;
 int32_t calculatedHeartRateFromSpO2 = 0;
+uint8_t spo2Decimation = 0;
 
 
 // ============================================================
@@ -261,9 +271,11 @@ void setup() {
   } else {
     maxSensorReady = true;
     Serial.println("MAX30102 OK");
-    maxSensor.setup(0x1F, 4, 2, 100, 411, 4096);
-    maxSensor.setPulseAmplitudeRed(0x1F);
-    maxSensor.setPulseAmplitudeIR(0x1F);
+    // 800 Hz / averaging 8 = 100 cleaner FIFO samples/s for beat detection.
+    // Higher LED drive helps compensate for weak optical coupling.
+    maxSensor.setup(0x3F, 8, 2, 800, 411, 4096);
+    maxSensor.setPulseAmplitudeRed(0x3F);
+    maxSensor.setPulseAmplitudeIR(0x3F);
     maxSensor.setPulseAmplitudeGreen(0);
   }
 
@@ -295,11 +307,27 @@ void setup() {
 // ============================================================
 void loop() {
   maintainWiFi();
-  uploadReadingToWebsite();
 
   handleButtons();
   serviceMAX30102();
   updateWearDetection();
+  uploadReadingToWebsite();
+
+  if (millis() - lastSensorLog >= SENSOR_LOG_INTERVAL_MS) {
+    lastSensorLog = millis();
+    Serial.print("SENSOR | ready=");
+    Serial.print(maxSensorReady);
+    Serial.print(" wearing=");
+    Serial.print(wearing);
+    Serial.print(" IR=");
+    Serial.print(maxSensorReady ? maxSensor.getIR() : 0);
+    Serial.print(" HR=");
+    Serial.print(filteredHeartRate);
+    Serial.print(" valid=");
+    Serial.print(heartRateValid);
+    Serial.print(" SpO2=");
+    Serial.println(currentSpO2);
+  }
 
   if (millis() - lastIMUUpdate >= IMU_INTERVAL) {
     lastIMUUpdate = millis();
@@ -339,7 +367,10 @@ void uploadReadingToWebsite() {
   payload += "}";
 
   WiFiClient client;
+  client.setTimeout(500);
   HTTPClient http;
+  http.setConnectTimeout(500);
+  http.setTimeout(500);
   if (!http.begin(client, WEBSITE_API_URL)) {
     Serial.print("ERROR: website API setup failed: ");
     Serial.println(WEBSITE_API_URL);
@@ -425,20 +456,25 @@ void serviceMAX30102() {
     uint32_t red = maxSensor.getFIFORed();
     uint32_t ir  = maxSensor.getFIFOIR();
 
-    if (spo2SampleCount < SPO2_BUFFER_SIZE) {
-      irBuffer[spo2SampleCount] = ir;
-      redBuffer[spo2SampleCount] = red;
-      spo2SampleCount++;
-    } else {
-      for (int i = 0; i < SPO2_BUFFER_SIZE - 1; i++) {
-        irBuffer[i] = irBuffer[i + 1];
-        redBuffer[i] = redBuffer[i + 1];
+    processHeartBeat(ir);
+
+    // Keep Maxim algorithm input near its expected 25 samples/s.
+    if (++spo2Decimation >= 4) {
+      spo2Decimation = 0;
+      if (spo2SampleCount < SPO2_BUFFER_SIZE) {
+        irBuffer[spo2SampleCount] = ir;
+        redBuffer[spo2SampleCount] = red;
+        spo2SampleCount++;
+      } else {
+        for (int i = 0; i < SPO2_BUFFER_SIZE - 1; i++) {
+          irBuffer[i] = irBuffer[i + 1];
+          redBuffer[i] = redBuffer[i + 1];
+        }
+        irBuffer[SPO2_BUFFER_SIZE - 1] = ir;
+        redBuffer[SPO2_BUFFER_SIZE - 1] = red;
       }
-      irBuffer[SPO2_BUFFER_SIZE - 1] = ir;
-      redBuffer[SPO2_BUFFER_SIZE - 1] = red;
     }
 
-    processHeartBeat(ir);
     maxSensor.nextSample();
   }
 }
@@ -461,8 +497,6 @@ void processHeartBeat(uint32_t irValue) {
       if (bpm >= 40 && bpm <= 220) {
         currentHeartRate = bpm;
         addHeartRate(bpm);
-        filteredHeartRate = getAverageHeartRate();
-        heartRateValid = true;
 
         // NeoPixel heartbeat pulse
         heartbeatFlashActive = true;
@@ -470,8 +504,15 @@ void processHeartBeat(uint32_t irValue) {
         pixel.setPixelColor(0, pixel.Color(255, 0, 0));
         pixel.show();
 
-        Serial.print("Heart rate: ");
-        Serial.println(filteredHeartRate);
+        if (hrHistoryCount == HR_HISTORY_SIZE &&
+            millis() - lastHeartRatePublish >= HEART_RATE_PUBLISH_INTERVAL) {
+          lastHeartRatePublish = millis();
+          filteredHeartRate = getAverageHeartRate();
+          heartRateValid = true;
+
+          Serial.print("Heart rate (5-beat mean): ");
+          Serial.println(filteredHeartRate);
+        }
       }
     }
   }
@@ -486,6 +527,25 @@ void addHeartRate(int bpm) {
 
 int getAverageHeartRate() {
   if (hrHistoryCount == 0) return 0;
+
+  if (hrHistoryCount == HR_HISTORY_SIZE) {
+    int sorted[HR_HISTORY_SIZE];
+    for (int i = 0; i < HR_HISTORY_SIZE; i++) sorted[i] = hrHistory[i];
+
+    for (int i = 1; i < HR_HISTORY_SIZE; i++) {
+      int value = sorted[i];
+      int j = i - 1;
+      while (j >= 0 && sorted[j] > value) {
+        sorted[j + 1] = sorted[j];
+        j--;
+      }
+      sorted[j + 1] = value;
+    }
+
+    // Ignore one false-low and one false-high beat.
+    return (sorted[1] + sorted[2] + sorted[3]) / 3;
+  }
+
   long total = 0;
   for (int i = 0; i < hrHistoryCount; i++) total += hrHistory[i];
   return total / hrHistoryCount;
@@ -545,6 +605,9 @@ void updateWearDetection() {
         wearStartTime = 0;
         removalStartTime = 0;
 
+        clearHeartHistory();
+        clearSpO2Buffer();
+
         Serial.println(">>> HERA WORN");
         setBaseStatusColor();
         markInteraction();   // waking the watch by wearing it counts as activity
@@ -553,7 +616,7 @@ void updateWearDetection() {
       wearStartTime = 0;
     }
   } else {
-    if (ir < IR_WEAR_THRESHOLD) {
+    if (ir < IR_REMOVE_THRESHOLD) {
       if (removalStartTime == 0) removalStartTime = millis();
 
       if (millis() - removalStartTime >= REMOVE_CONFIRM_TIME) {
@@ -593,6 +656,7 @@ void setBaseStatusColor() {
 // ============================================================
 void clearSpO2Buffer() {
   spo2SampleCount = 0;
+  spo2Decimation = 0;
   for (int i = 0; i < SPO2_BUFFER_SIZE; i++) {
     irBuffer[i] = 0;
     redBuffer[i] = 0;
@@ -604,6 +668,7 @@ void clearHeartHistory() {
   hrHistoryIndex = 0;
   hrHistoryCount = 0;
   lastBeatTime = 0;
+  lastHeartRatePublish = millis();
 }
 
 
@@ -968,21 +1033,138 @@ void printWakeReason() {
 }
 
 
+int ecgOffset(int x) {
+  int p = x % 90;
+  if (p < 18) return 0;    // flat baseline
+  if (p < 22) return -3;   // P wave
+  if (p < 26) return 0;
+  if (p < 29) return 6;    // Q dip
+  if (p < 33) return -38;  // R spike
+  if (p < 37) return 22;   // S dip
+  if (p < 41) return 0;
+  if (p < 50) return -9;   // T wave
+  return 0;                 // rest of cycle, flat
+}
+
 // ============================================================
 // STARTUP
 // ============================================================
 void showStartup() {
   tft.fillScreen(ST77XX_BLACK);
-  tft.setTextColor(ST77XX_WHITE);
-  tft.setTextSize(4);
-  tft.setCursor(68, 40);
-  tft.print("HERA");
 
-  // tft.setTextSize(1);
-  // tft.setCursor(72, 82);
-  // tft.print("HEALTH MONITOR");
+  // ---- Stage 1: a live ECG trace sweeps across the screen ----
+  const int baseline = 67;
+  int prevX = 0, prevY = baseline;
+  bool flashed = false;
 
-  delay(700);
+  for (int x = 1; x <= 240; x += 2) {
+    int y = baseline + ecgOffset(x);
+    tft.drawLine(prevX, prevY, x, y, ST77XX_GREEN);
+
+    // fire the NeoPixel like a real pulse, right on the R-spike
+    int p = x % 90;
+    if (p >= 30 && p < 34 && !flashed) {
+      setPixel(80, 0, 0);
+      flashed = true;
+    } else if (p >= 34) {
+      setPixel(0, 0, 0);
+      flashed = false;
+    }
+
+    prevX = x;
+    prevY = y;
+    delay(4);
+  }
+
+  setPixel(0, 0, 0);
+  delay(150);
+  tft.fillScreen(ST77XX_BLACK);
+
+  // ---- Stage 2: "HERA" materializes letter by letter behind a scan beam ----
+  const char* word = "HERA";
+  const int len = 4;
+  const int charSize = 5;
+  const int charWidth = 6 * charSize;
+  const int totalWidth = charWidth * len;
+  const int startX = (240 - totalWidth) / 2;
+  const int logoY = 40;
+  const int cellHeight = 8 * charSize;
+
+  for (int i = 0; i < len; i++) {
+    char c[2] = { word[i], '\0' };
+    int cx0 = startX + i * charWidth;
+
+    // a scanning beam sweeps across the letter's cell before it appears
+    for (int sx = cx0; sx < cx0 + charWidth; sx += 3) {
+      tft.drawFastVLine(sx, logoY - 4, cellHeight + 8, ST77XX_WHITE);
+      delay(3);
+      tft.drawFastVLine(sx, logoY - 4, cellHeight + 8, ST77XX_BLACK);
+    }
+
+    // letter snaps in with a white flash, then settles to HERA red
+    tft.setTextSize(charSize);
+    tft.setTextColor(ST77XX_WHITE);
+    tft.setCursor(cx0, logoY);
+    tft.print(c);
+    delay(45);
+
+    tft.setTextColor(ST77XX_RED);
+    tft.setCursor(cx0, logoY);
+    tft.print(c);
+
+    setPixel(60, 0, 0);
+    delay(30);
+    setPixel(0, 0, 0);
+  }
+
+  delay(200);
+
+  // ---- Stage 3: heartbeat pulse rings radiate out from the logo ----
+  int cx = 120, cy = logoY + (cellHeight / 2);
+
+  for (int beat = 0; beat < 3; beat++) {
+    // "lub" - the main pulse
+    setPixel(90, 0, 0);
+    for (int r = 6; r <= 70; r += 5) {
+      tft.drawCircle(cx, cy, r, ST77XX_RED);
+      delay(8);
+      tft.drawCircle(cx, cy, r, ST77XX_BLACK);
+    }
+    setPixel(0, 0, 0);
+    delay(60);
+
+    // "dub" - a smaller, faster follow-up pulse
+    setPixel(40, 0, 0);
+    for (int r = 6; r <= 45; r += 5) {
+      tft.drawCircle(cx, cy, r, ST77XX_RED);
+      delay(6);
+      tft.drawCircle(cx, cy, r, ST77XX_BLACK);
+    }
+    setPixel(0, 0, 0);
+    delay(160);
+  }
+
+  // redraw the wordmark clean on top - the rings may have brushed its edges
+  tft.setTextSize(charSize);
+  tft.setTextColor(ST77XX_RED);
+  tft.setCursor(startX, logoY);
+  tft.print(word);
+
+  // ---- Stage 4: tagline types itself out beneath the logo ----
+  const char* tagline = "HEALTH MONITOR";
+  int tagLen = strlen(tagline);
+  int tagX = (240 - tagLen * 6) / 2;
+  int tagY = logoY + cellHeight + 12;
+
+  tft.setTextSize(1);
+  tft.setTextColor(ST77XX_CYAN);
+  tft.setCursor(tagX, tagY);
+  for (int i = 0; i < tagLen; i++) {
+    tft.print(tagline[i]);
+    delay(25);
+  }
+
+  delay(500);
 }
 
 

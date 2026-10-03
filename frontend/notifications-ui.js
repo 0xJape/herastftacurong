@@ -1,7 +1,7 @@
 (()=>{
   const button=document.getElementById('notification-button'),panel=document.getElementById('notification-panel'),list=document.getElementById('notification-list'),badge=document.getElementById('notification-badge'),readButton=document.getElementById('notification-read');
   if(!button||!panel||!list||!badge||!readButton)return;
-  const storageKey='hera.notifications.read',preferencesKey='hera.notification.preferences',historyKey='hera.notifications.history';
+  let storageKey,preferencesKey,historyKey;
   let notifications=[],audioContext=null,loaded=false,knownIds=new Set();
   const readIds=()=>new Set(JSON.parse(localStorage.getItem(storageKey)||'[]'));
   const escape=value=>String(value??'').replace(/[&<>'"]/g,char=>({"&":"&amp;","<":"&lt;",">":"&gt;","'":"&#39;",'"':"&quot;"})[char]);
@@ -18,5 +18,5 @@
   document.addEventListener('keydown',event=>{if(event.key==='Escape'&&!panel.hidden){close();button.focus()}});
   document.addEventListener('pointerdown',enableSound,{once:true});
   window.addEventListener('hera:notifications-refresh',refresh);
-  refresh();setInterval(()=>{if(!document.hidden)refresh()},60000);
+  fetch('/api/auth/me',{cache:'no-store'}).then(response=>response.ok?response.json():Promise.reject()).then(({user})=>{const suffix=`.${user.id}`;storageKey=`hera.notifications.read${suffix}`;preferencesKey=`hera.notification.preferences${suffix}`;historyKey=`hera.notifications.history${suffix}`;refresh();setInterval(()=>{if(!document.hidden)refresh()},60000)}).catch(()=>{});
 })();

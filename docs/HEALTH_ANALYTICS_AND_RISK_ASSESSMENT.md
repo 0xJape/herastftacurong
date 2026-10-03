@@ -16,7 +16,7 @@
 
 ## Analytics
 
-Possible outputs:
+Implemented outputs:
 
 - Cycle length
 - Cycle variability
@@ -25,6 +25,12 @@ Possible outputs:
 - Activity trends
 - Heart-rate trends
 - SpO₂ trends
+- Personal ranges after 14 reliable prior days
+- Multi-signal deviation and recurring-symptom notices
+- Curated sleep/activity, hydration/wellness, nutrition/sleep, and activity/heart-rate relationships
+- Data coverage, confidence, limitations, algorithm version, and prediction stability
+
+Calculations are deterministic. LLM features may explain saved results but do not calculate them. Missing or unreliable observations are excluded and never represented as zero.
 
 ## Wellness Score
 
@@ -52,6 +58,4 @@ Example states:
 
 ## Activity Load Index
 
-The current firmware provides activity classification only.
-
-The Activity Load Index remains a planned derived metric and should be based on a documented formula using activity intensity and duration.
+Firmware activity classifications are aggregated into daily duration buckets. HERA calculates a documented Activity Load Index from worn-device activity samples, compares it with rolling personal history, and labels high-load, balanced, and lower-load/rest days. Results are informational and non-diagnostic.

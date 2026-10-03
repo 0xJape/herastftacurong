@@ -1,5 +1,5 @@
-const CACHE='hera-shell-v4';
-const SHELL=['/homepage','/index.html','/styles.css?v=11','/app.js?v=9','/assistant-ui.js?v=2','/notifications-ui.js?v=4','/profile-ui.js?v=1','/checkin-reminder.js?v=1','/checkin-ui.js?v=1','/analytics-ui.js?v=3','/period-ui.js?v=3','/nutrition-ui.js?v=4','/silk.js?v=2','/manifest.webmanifest','/assets/HERA_LOGO.jpg'];
+const CACHE='hera-shell-v22';
+const SHELL=['/homepage','/index.html','/styles.css?v=12','/analytics-baseline.css?v=2','/analytics-patterns.css?v=1','/analytics-learning.css?v=1','/goals.css?v=3','/care.css?v=4','/sleep-modern.css?v=1','/sleep-chart.css?v=1','/sleep-chart-contrast.css?v=2','/app.js?v=12','/assistant-ui.js?v=2','/notifications-ui.js?v=5','/profile-ui.js?v=5','/goals-ui.js?v=3','/care-ui.js?v=4','/checkin-reminder.js?v=3','/checkin-ui.js?v=1','/analytics-ui.js?v=12','/period-ui.js?v=3','/nutrition-ui.js?v=7','/meal-ui.js?v=1','/sleep-ui.js?v=1','/sleep-experience.js?v=3','/silk.js?v=2','/manifest.webmanifest','/assets/HERA_LOGO.jpg'];
 self.addEventListener('install',event=>event.waitUntil(caches.open(CACHE).then(cache=>cache.addAll(SHELL)).then(()=>self.skipWaiting())));
 self.addEventListener('activate',event=>event.waitUntil(caches.keys().then(keys=>Promise.all(keys.filter(key=>key!==CACHE).map(key=>caches.delete(key)))).then(()=>self.clients.claim())));
 self.addEventListener('fetch',event=>{

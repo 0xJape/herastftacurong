@@ -5,7 +5,8 @@
   "type": "module",
   "scripts": {
     "start": "node server.js",
-    "dev": "node --watch server.js"
+    "dev": "node --watch server.js",
+    "test": "node sleep-score.test.js && node wearable-quality.test.js && node activity-analytics.test.js && node wellness-timeline.test.js && node personal-baseline.test.js && node wellness-patterns.test.js && node goal-progress.test.js && node intervention-outcomes.test.js && node intervention-ranking.test.js && node care-import.test.js && node health-summary.test.js"
   },
   "engines": {
     "node": ">=22.5.0"

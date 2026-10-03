@@ -40,6 +40,10 @@ Example:
 
 - `GET /api/analytics/:userId`
 
+Authenticated endpoint; URL user ID is ignored in favor of session account. `days` must be `1`, `7`, `30`, or `90`. Response includes account-scoped observations, activity summaries, personal baselines, deterministic insights, trend directions, curated same-day relationships, data-quality coverage, prediction stability, and recent version history. Personal comparisons use a 31-day learning window and require 14 prior reliable days for established ranges. Missing values remain unavailable rather than becoming zero.
+
+Pattern output includes `algorithmVersion`, confidence, supporting inputs/date range, explanation, limitation, and non-diagnostic disclaimer. Relationship output requires seven overlapping days and states that association does not prove cause.
+
 ## Risk Assessment
 
 - `GET /api/risk-assessment/latest/:userId`

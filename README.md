@@ -160,6 +160,8 @@ npm start
 
 Open <http://localhost:3000/homepage>.
 
+First launch redirects to `/login`. Create account; first account safely claims existing prototype records and `HERA-001`. Later accounts can explicitly reassign device from Profile. Reassignment affects future readings only.
+
 `start.bat` stops any existing listener on port `3000`, starts the backend, and opens HERA in the default browser.
 
 ## AI Configuration
@@ -216,10 +218,15 @@ Use reserved LAN IPv4 address if ESP32 cannot resolve `.local`.
 
 | Method | Route | Purpose |
 |---|---|---|
+| `POST` | `/api/auth/register` | Create account and secure session |
+| `POST` | `/api/auth/login` | Sign in |
+| `GET` | `/api/auth/me` | Current account |
+| `POST` | `/api/auth/logout` | End current session |
+| `GET/PUT` | `/api/device` | View or explicitly assign `HERA-001` |
 | `POST` | `/api/wearable/readings` | Validate and store wearable telemetry |
-| `GET` | `/api/wearable/latest` | Latest wearable reading |
-| `GET` | `/api/wearable/history` | Wearable history |
-| `GET/POST` | `/api/checkins/:userId` | List or save daily check-ins |
+| `GET` | `/api/wearable/latest` | Signed-in account's latest wearable reading |
+| `GET` | `/api/wearable/history` | Signed-in account's wearable history |
+| `GET/POST` | `/api/checkins/:userId` | List or save check-ins; path ID is legacy-compatible and ignored for ownership |
 | `GET/POST/PUT/DELETE` | `/api/cycles/...` | Cycle records and summaries |
 | `GET` | `/api/analytics/:userId` | Aggregated analytics |
 | `GET` | `/api/wellness/:userId` | Latest self-report wellness score |
@@ -233,6 +240,8 @@ See `docs/API_DESIGN.md` and `backend/server.js` for details. Runtime code is so
 
 Backend creates `backend/hera.db` automatically with tables for:
 
+- Accounts and hashed sessions
+- Device-to-account assignments
 - Wearable sensor readings
 - Daily check-ins
 - Menstrual-cycle records
@@ -260,11 +269,10 @@ node seed-demo.js
 
 ## Current Prototype Limitations
 
-- No authenticated accounts or per-user authorization
-- Several flows use prototype user ID `1`
+- Some frontend URLs retain legacy `/1` shape; backend always resolves account from secure session
 - Profile and notification settings do not sync between phones
 - Notifications are foreground/browser-local, not Web Push
-- Wearable transport uses unauthenticated local HTTP
+- Wearable transport uses unauthenticated local HTTP; device ID can be spoofed on untrusted networks
 - No Bluetooth pairing or offline telemetry queue
 - No production deployment, automated backup, or test suite
 - Cycle and wellness outputs are estimates/summaries, not clinical conclusions
@@ -274,7 +282,6 @@ node seed-demo.js
 Before internet exposure or real-user health-data storage, add:
 
 - HTTPS and stable domain
-- Authentication and per-user authorization
 - Authenticated wearable ingestion and restricted CORS
 - Secret management and encrypted backups
 - Monitoring, audit logs, rate limits, and security testing

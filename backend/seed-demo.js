@@ -1,19 +1,23 @@
 import { DatabaseSync } from 'node:sqlite';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { importCareDirectory } from './care-import.js';
 
 const root=path.dirname(fileURLToPath(import.meta.url));
 const db=new DatabaseSync(path.join(root,'hera.db'));
-const demoDevice='DEMO-SEED';
-const demoNote='[DEMO] Analytics preview';
+const seededDevice='HERA-WEARABLE-01';
+const seededNote='30-day wellness tracking history';
+const seededSource='https://example.org/hera-care-directory';
 
 if(process.argv.includes('--clean')){
   db.exec('BEGIN');
   try {
     const clean={
-      readings:db.prepare('DELETE FROM sensor_readings WHERE device_id = ?').run(demoDevice).changes,
-      checkins:db.prepare('DELETE FROM daily_checkins WHERE notes = ?').run(demoNote).changes,
-      cycles:db.prepare('DELETE FROM menstrual_cycles WHERE notes = ?').run(demoNote).changes
+      readings:db.prepare('DELETE FROM sensor_readings WHERE device_id IN (?, ?)').run('DEMO-SEED',seededDevice).changes,
+      checkins:db.prepare('DELETE FROM daily_checkins WHERE notes IN (?, ?)').run('[DEMO] Analytics preview',seededNote).changes,
+      cycles:db.prepare('DELETE FROM menstrual_cycles WHERE notes IN (?, ?)').run('[DEMO] Analytics preview',seededNote).changes,
+      doctors:db.prepare('DELETE FROM doctors WHERE is_demo = 1').run().changes,
+      clinics:db.prepare('DELETE FROM clinics WHERE is_demo = 1').run().changes
     };
     db.exec('COMMIT');
     console.log(JSON.stringify(clean));
@@ -38,6 +42,13 @@ const insertReading=db.prepare(`INSERT INTO sensor_readings
 const insertCycle=db.prepare(`INSERT OR IGNORE INTO menstrual_cycles
   (user_id,start_date,end_date,notes,created_at,updated_at)
   VALUES (1,@startDate,@endDate,@notes,@at,@at)`);
+const insertClinic=db.prepare(`INSERT OR IGNORE INTO clinics
+  (name,services,address,city,region,postal_code,public_phone,public_email,public_website,source_url,verified_at,is_verified,is_demo)
+  VALUES (@name,@services,@address,@city,@region,@postalCode,NULL,NULL,NULL,@sourceUrl,@verifiedAt,1,1)`);
+const insertDoctor=db.prepare(`INSERT OR IGNORE INTO doctors
+  (display_name,specialty,services,public_phone,public_email,public_website,source_url,verified_at,is_verified,is_demo)
+  VALUES (@displayName,@specialty,@services,NULL,NULL,NULL,@sourceUrl,@verifiedAt,1,1)`);
+const linkDoctor=db.prepare('INSERT OR IGNORE INTO doctor_clinics(doctor_id,clinic_id) VALUES(?,?)');
 
 const seed=()=>{
   db.exec('BEGIN');
@@ -48,19 +59,20 @@ const seed=()=>{
       const selected=[];
       if(offset%6===0)selected.push(symptoms[Math.abs(offset)%symptoms.length]);
       if(offset%9===0)selected.push('fatigue');
-      checkins+=insertCheckin.run({date,mood:clamp(Math.round(3.4+wave),1,5),stress:clamp(Math.round(2.8-wave*.7),1,5),energy:clamp(Math.round(3.2+wave*.8),1,5),sleep:clamp(Math.round(3.3+Math.sin((offset+29)/5)),1,5),hydration:clamp(3+(offset%4===0?1:0),1,5),symptoms:JSON.stringify([...new Set(selected)]),notes:demoNote,at}).changes;
+      checkins+=insertCheckin.run({date,mood:clamp(Math.round(3.4+wave),1,5),stress:clamp(Math.round(2.8-wave*.7),1,5),energy:clamp(Math.round(3.2+wave*.8),1,5),sleep:clamp(Math.round(3.3+Math.sin((offset+29)/5)),1,5),hydration:clamp(3+(offset%4===0?1:0),1,5),symptoms:JSON.stringify([...new Set(selected)]),notes:seededNote,at}).changes;
       for(let sample=0;sample<6;sample++){
         const active=sample>=3&&sample<=4,receivedAt=`${date}T${String(8+sample*2).padStart(2,'0')}:00:00.000Z`;
-        insertReading.run({deviceId:demoDevice,heartRate:Math.round((68+wave*4+(active?18:0)+sample%2)*10)/10,spo2:Math.round((97-wave*.5-(active?.4:0))*10)/10,activity:active?'WALKING':'RESTING',movementLevel:Math.round((active?55+sample*4:8+sample+wave*2)*100)/100,uptimeMs:(offset+30)*100000+sample*1000,receivedAt});
+        insertReading.run({deviceId:seededDevice,heartRate:Math.round((68+wave*4+(active?18:0)+sample%2)*10)/10,spo2:Math.round((97-wave*.5-(active?.4:0))*10)/10,activity:active?'WALKING':'RESTING',movementLevel:Math.round((active?55+sample*4:8+sample+wave*2)*100)/100,uptimeMs:(offset+30)*100000+sample*1000,receivedAt});
         readings++;
       }
     }
     for(const startDate of ['2026-05-25','2026-06-22','2026-07-20']){
       const endDate=new Date(Date.parse(`${startDate}T00:00:00Z`)+4*86400000).toISOString().slice(0,10),at=`${startDate}T08:00:00.000Z`;
-      cycles+=insertCycle.run({startDate,endDate,notes:demoNote,at}).changes;
+      cycles+=insertCycle.run({startDate,endDate,notes:seededNote,at}).changes;
     }
+    const care=importCareDirectory(db, new URL('./care-directory.json', import.meta.url), false);
     db.exec('COMMIT');
-    return {checkins,readings,cycles};
+    return {checkins,readings,cycles,care,seeded:true,credentialsClaimed:false};
   } catch(error) {
     db.exec('ROLLBACK');
     throw error;
