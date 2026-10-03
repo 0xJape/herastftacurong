@@ -46,6 +46,40 @@ export function recoveryCurve(activity = [], baselines = []) {
   return { type: 'recovery-curve', available: true, baseline: normal.average, daysWithinRange: values.filter(item => Number(item.value) <= normal.high).length, sampleSize: values.length, limitation: 'Inferred from daily activity load, not clinical recovery.' };
 }
 
+export function sleepActivityInteraction(sleep = [], activity = []) {
+  const activityByDate = new Map(activity.map(item => [item.date, Number(item.value)]));
+  const pairs = sleep.map(item => ({ date: item.date, sleep: Number(item.value), activity: activityByDate.get(item.date) })).filter(item => Number.isFinite(item.sleep) && Number.isFinite(item.activity));
+  if (pairs.length < 7) return unavailable('sleep-activity-interaction', 'At least 7 overlapping sleep and activity days are required.');
+  const result = relationship('sleepWellness', 'activityLoadIndex', pairs.map(item => ({ date: item.date, value: item.sleep })), pairs.map(item => ({ date: item.date, value: item.activity })));
+  return { type: 'sleep-activity-interaction', ...result, explanation: 'Compares sleep wellness with same-day recorded activity; it does not establish cause.' };
+}
+
+export function nutritionPhysiologyAssociation(meals = [], series = {}) {
+  const calories = new Map(meals.filter(item => Number.isFinite(Number(item.value))).map(item => [item.date, Number(item.value)]));
+  const associations = ['sleepWellness', 'activityLoadIndex', 'heartRate'].map(key => {
+    const values = series[key] || [];
+    return relationship('calories', key, [...calories].map(([date, value]) => ({ date, value })), values);
+  }).filter(item => item.available);
+  if (!associations.length) return unavailable('nutrition-physiology-association', 'At least 7 overlapping nutrition and physiology days are required.');
+  return { type: 'nutrition-physiology-association', available: true, associations, sampleSize: Math.max(...associations.map(item => item.sampleSize)), limitation: 'Recorded calories and physiology may be incomplete; association does not prove cause.' };
+}
+
+export function cyclePhaseSignature(cycles = [], series = {}) {
+  if (cycles.length < 3) return unavailable('cycle-phase-signature', 'At least 3 recorded cycles are required.');
+  const lengths = cycles.slice(1).map((cycle, index) => Math.round((Date.parse(`${cycle.startDate}T00:00:00Z`) - Date.parse(`${cycles[index].startDate}T00:00:00Z`)) / 86400000)).filter(value => value >= 15 && value <= 60);
+  if (lengths.length < 2) return unavailable('cycle-phase-signature', 'At least 3 valid cycle starts are required.');
+  const cycleLength = Math.round(lengths.reduce((sum, value) => sum + value, 0) / lengths.length), phases = { period: [], follicular: [], ovulation: [], luteal: [] };
+  for (const [key, values] of Object.entries(series)) for (const item of values) {
+    const cycle = cycles.slice().reverse().find(entry => entry.startDate <= item.date);
+    if (!cycle || !Number.isFinite(Number(item.value))) continue;
+    const day = Math.floor((Date.parse(`${item.date}T00:00:00Z`) - Date.parse(`${cycle.startDate}T00:00:00Z`)) / 86400000) + 1;
+    const phase = day <= 5 ? 'period' : day <= Math.max(6, cycleLength - 16) ? 'follicular' : day <= cycleLength - 12 ? 'ovulation' : 'luteal';
+    phases[phase].push({ key, value: Number(item.value) });
+  }
+  const summary = Object.fromEntries(Object.entries(phases).map(([phase, values]) => [phase, { sampleSize: values.length, averages: Object.fromEntries([...new Set(values.map(item => item.key))].map(key => [key, round(values.filter(item => item.key === key).reduce((sum, item) => sum + item.value, 0) / values.filter(item => item.key === key).length)])) }]));
+  return { type: 'cycle-phase-signature', available: true, cycleLength, phases: summary, confidence: confidence(lengths.length + 1), limitation: 'Phase assignment is estimated from recorded cycle starts; it is not medical prediction.' };
+}
+
 export function digitalTwinSummary(baselines = []) {
   const available = baselines.filter(item => item.current && item.average != null);
   if (!available.length) return unavailable('digital-twin', 'Reliable current values and personal baselines are required.');

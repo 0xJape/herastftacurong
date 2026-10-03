@@ -1,4 +1,5 @@
 HERA Features
+Analytics continuation (2026-10-03): added gated sleep/activity interaction, nutrition/physiology association, and cycle-phase signature calculations to analytics API. Existing recovery, digital-twin, and discrepancy outputs remain exposed through API. Frontend exposure for these derived cards remains pending; unsupported outputs stay marked unavailable until minimum data exists.
 Feature	How it works
 Personalized Baseline Learning	Learns the user’s normal patterns for heart rate, activity, sleep, cycle, symptoms, and nutrition. It updates the baseline as reliable new data are added.
 Personal Physiological Digital Twin	Builds a personal health profile from past measurements and compares current readings with the user’s own normal pattern.

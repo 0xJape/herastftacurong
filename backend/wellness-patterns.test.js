@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import { buildPatterns, digitalTwinSummary, recoveryCurve, relationship, symptomSensorDiscrepancy, temporalPattern, trend } from './wellness-patterns.js';
+import { buildPatterns, cyclePhaseSignature, digitalTwinSummary, nutritionPhysiologyAssociation, recoveryCurve, relationship, sleepActivityInteraction, symptomSensorDiscrepancy, temporalPattern, trend } from './wellness-patterns.js';
 
 const series = (count, start, step = 1) => Array.from({ length: count }, (_, index) => ({ date: `2026-09-${String(index + 1).padStart(2, '0')}`, value: start + index * step }));
 assert.equal(trend('wellness', series(14, 50)).direction, 'increasing');
@@ -21,4 +21,7 @@ assert.equal(temporalPattern([{ date: '2026-09-01' }, { date: '2026-09-03' }, { 
 assert.equal(digitalTwinSummary([{ key: 'wellness', label: 'Wellness', current: { value: 70 }, average: 65, status: 'within', unit: '%' }]).available, true);
 assert.equal(recoveryCurve(Array.from({ length: 7 }, (_, i) => ({ date: `2026-09-${String(i + 1).padStart(2, '0')}`, value: 20 })), [{ key: 'activityLoadIndex', average: 30, high: 50 }]).available, true);
 assert.equal(symptomSensorDiscrepancy([{ date: '2026-09-01', symptoms: ['fatigue'] }], [{ key: 'heartRate', current: { date: '2026-09-01', value: 70 }, confidence: 'established', status: 'within' }]).mismatchDays, 1);
+assert.equal(sleepActivityInteraction(series(7, 70), series(7, 30)).available, true);
+assert.equal(nutritionPhysiologyAssociation(series(7, 2000), { sleepWellness: series(7, 70) }).available, true);
+assert.equal(cyclePhaseSignature([{ startDate: '2026-06-01' }, { startDate: '2026-06-29' }, { startDate: '2026-07-27' }], { wellness: series(7, 70) }).available, true);
 console.log('Wellness pattern checks passed');

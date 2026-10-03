@@ -11,7 +11,7 @@ import { addActivityBaseline, aggregateActivity } from './activity-analytics.js'
 import { buildWellnessTimeline } from './wellness-timeline.js';
 import { buildPersonalBaselines } from './personal-baseline.js';
 import { assessDataQuality } from './data-quality.js';
-import { buildPatterns, digitalTwinSummary, recoveryCurve, symptomSensorDiscrepancy } from './wellness-patterns.js';
+import { buildPatterns, cyclePhaseSignature, digitalTwinSummary, nutritionPhysiologyAssociation, recoveryCurve, sleepActivityInteraction, symptomSensorDiscrepancy } from './wellness-patterns.js';
 import { summarizeGoal } from './goal-progress.js';
 import { buildInterventionOutcome } from './intervention-outcomes.js';
 import { rankSuggestions, SUGGESTIONS } from './intervention-ranking.js';
@@ -1002,6 +1002,9 @@ app.get('/api/analytics/:userId', (req, res) => {
   const patterns = buildPatterns({ baselines, series, symptoms: baselineCheckins, quality });
   patterns.digitalTwin = digitalTwinSummary(baselines);
   patterns.recovery = recoveryCurve(series.activityLoadIndex, baselines);
+  patterns.sleepActivity = sleepActivityInteraction(series.sleepWellness, series.activityLoadIndex);
+  patterns.nutritionPhysiology = nutritionPhysiologyAssociation(series.calories, series);
+  patterns.cyclePhaseSignature = cyclePhaseSignature(cycles.length >= 3 ? getCycles.all(userId, 100).reverse() : [], series);
   patterns.symptomSensorDiscrepancy = symptomSensorDiscrepancy(baselineCheckins, baselines);
   patterns.predictionConfidence = { level: baselineCheckins.length >= 21 && baselineWearable.length >= 21 ? 'high' : baselineCheckins.length >= 7 ? 'moderate' : 'limited', inputs: ['personal baselines', 'daily observations'], limitation: 'Coverage confidence is not medical certainty.' };
   patterns.qualityReport = assessDataQuality({ checkins: baselineCheckins, wearable: baselineWearable, sleep: baselineSleep, water: baselineWater, meals: baselineMeals });
