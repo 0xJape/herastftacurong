@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import { buildPatterns, relationship, trend } from './wellness-patterns.js';
+import { buildPatterns, digitalTwinSummary, recoveryCurve, relationship, symptomSensorDiscrepancy, temporalPattern, trend } from './wellness-patterns.js';
 
 const series = (count, start, step = 1) => Array.from({ length: count }, (_, index) => ({ date: `2026-09-${String(index + 1).padStart(2, '0')}`, value: start + index * step }));
 assert.equal(trend('wellness', series(14, 50)).direction, 'increasing');
@@ -17,4 +17,8 @@ const patterns = buildPatterns({
 assert.equal(patterns.insights[0].type, 'multi-parameter');
 assert.ok(patterns.insights.some(item => item.id === 'recurrence-fatigue'));
 assert.match(patterns.disclaimer, /not a diagnosis/i);
+assert.equal(temporalPattern([{ date: '2026-09-01' }, { date: '2026-09-03' }, { date: '2026-09-06' }]).averageGapDays, 2.5);
+assert.equal(digitalTwinSummary([{ key: 'wellness', label: 'Wellness', current: { value: 70 }, average: 65, status: 'within', unit: '%' }]).available, true);
+assert.equal(recoveryCurve(Array.from({ length: 7 }, (_, i) => ({ date: `2026-09-${String(i + 1).padStart(2, '0')}`, value: 20 })), [{ key: 'activityLoadIndex', average: 30, high: 50 }]).available, true);
+assert.equal(symptomSensorDiscrepancy([{ date: '2026-09-01', symptoms: ['fatigue'] }], [{ key: 'heartRate', current: { date: '2026-09-01', value: 70 }, confidence: 'established', status: 'within' }]).mismatchDays, 1);
 console.log('Wellness pattern checks passed');

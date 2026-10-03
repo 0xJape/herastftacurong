@@ -5,7 +5,9 @@ const METRICS = {
   activityLoadIndex: { label: 'Activity load', unit: '/100', precision: 0 },
   wellness: { label: 'Wellness', unit: '%', precision: 0 },
   sleepWellness: { label: 'Sleep wellness', unit: '/100', precision: 0 },
-  hydration: { label: 'Hydration', unit: ' mL', precision: 0 }
+  hydration: { label: 'Hydration', unit: ' mL', precision: 0 },
+  nutritionCalories: { label: 'Recorded calories', unit: ' kcal', precision: 0 },
+  symptomDays: { label: 'Symptom days', unit: ' days', precision: 0 }
 };
 
 const round = (value, precision) => Number(value.toFixed(precision));

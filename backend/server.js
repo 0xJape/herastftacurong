@@ -10,7 +10,8 @@ import { normalizeWearableReading } from './wearable-quality.js';
 import { addActivityBaseline, aggregateActivity } from './activity-analytics.js';
 import { buildWellnessTimeline } from './wellness-timeline.js';
 import { buildPersonalBaselines } from './personal-baseline.js';
-import { buildPatterns } from './wellness-patterns.js';
+import { assessDataQuality } from './data-quality.js';
+import { buildPatterns, digitalTwinSummary, recoveryCurve, symptomSensorDiscrepancy } from './wellness-patterns.js';
 import { summarizeGoal } from './goal-progress.js';
 import { buildInterventionOutcome } from './intervention-outcomes.js';
 import { rankSuggestions, SUGGESTIONS } from './intervention-ranking.js';
@@ -992,11 +993,18 @@ app.get('/api/analytics/:userId', (req, res) => {
     wellness: baselineCheckins.map(item => ({ date: item.date, value: item.wellness })),
     sleepWellness: baselineSleep.map(item => ({ date: item.date, value: item.sws, reliable: item.sws != null })),
     hydration: baselineWater.map(item => ({ date: item.date, value: item.milliliters })),
-    calories: [...caloriesByDate].map(([date, value]) => ({ date, value }))
+    calories: [...caloriesByDate].map(([date, value]) => ({ date, value })),
+    nutritionCalories: [...caloriesByDate].map(([date, value]) => ({ date, value })),
+    symptomDays: baselineCheckins.filter(item => item.symptoms.length).map(item => ({ date: item.date, value: 1 }))
   };
   const baselines = buildPersonalBaselines(series);
   const quality = { reliableWearableDays: baselineWearable.filter(item => item.wornReadings > 0).length, checkinDays: baselineCheckins.length, sleepDays: baselineSleep.filter(item => item.sws != null).length, hydrationDays: baselineWater.length, mealDays: caloriesByDate.size, windowDays: 31 };
   const patterns = buildPatterns({ baselines, series, symptoms: baselineCheckins, quality });
+  patterns.digitalTwin = digitalTwinSummary(baselines);
+  patterns.recovery = recoveryCurve(series.activityLoadIndex, baselines);
+  patterns.symptomSensorDiscrepancy = symptomSensorDiscrepancy(baselineCheckins, baselines);
+  patterns.predictionConfidence = { level: baselineCheckins.length >= 21 && baselineWearable.length >= 21 ? 'high' : baselineCheckins.length >= 7 ? 'moderate' : 'limited', inputs: ['personal baselines', 'daily observations'], limitation: 'Coverage confidence is not medical certainty.' };
+  patterns.qualityReport = assessDataQuality({ checkins: baselineCheckins, wearable: baselineWearable, sleep: baselineSleep, water: baselineWater, meals: baselineMeals });
   const signature = createHash('sha256').update(JSON.stringify({ insights: patterns.insights, trends: patterns.trends, relationships: patterns.relationships })).digest('hex');
   savePredictionSnapshot.run(userId, todayDate(), patterns.algorithmVersion, signature, JSON.stringify(patterns), patterns.generatedAt);
   const predictionHistory = getPredictionSnapshots.all(userId, 5).map(item => ({ ...item, result: JSON.parse(item.resultJson), resultJson: undefined }));

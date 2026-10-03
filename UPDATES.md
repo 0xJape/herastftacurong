@@ -116,11 +116,11 @@ Detailed screen placement and interaction design: [`docs/UI_UX_FEATURE_PLAN.md`]
 
 | Status | Feature | Current evidence / remaining work | Phase |
 |---|---|---|---:|
-| [~] | Personalized Baseline Learning | Analytics now compares seven domains with reliable prior records, explicit 14-day learning progress, personal ranges, and limitations; nutrition and symptom baselines remain. | 4 |
-| [ ] | Personal Physiological Digital Twin | Add personal model and current-versus-normal comparison. | 4 |
+| [~] | Personalized Baseline Learning | Analytics now compares nine domains with reliable prior records, explicit 14-day learning progress, personal ranges, and limitations; nutrition and symptom baselines now have initial daily signals. | 4 |
+| [~] | Personal Physiological Digital Twin | Analytics returns current-versus-personal-normal summaries when reliable values exist. | 4 |
 | [~] | Personalized Trend Forecasting | Charts and cycle prediction exist; add direction and short-term forecasts by measure. | 4 |
-| [ ] | Prediction Stability Monitor | Persist prediction versions and compare consecutive outputs. | 4 |
-| [ ] | Symptom–Sensor Discrepancy Detector | Align symptom, wearable, activity, and sleep records; calculate mismatches. | 4 |
+| [~] | Prediction Stability Monitor | Prediction snapshots compare consecutive insight sets; coverage confidence is explicit. | 4 |
+| [~] | Symptom–Sensor Discrepancy Detector | Reports symptom days where established personal measures remain within range; richer fusion remains. | 4 |
 | [~] | Multi-Parameter Anomaly Detection | Separate signal notices exist; add joint multi-measure anomaly analysis. | 4 |
 | [~] | Early Pattern-Deviation Detection | Cycle/signal notices exist; compare all recent domains with personal baselines. | 4 |
 | [~] | Pattern Recurrence Detection | Repeated-symptom rule exists; add combined-pattern matching. | 4 |
@@ -131,13 +131,13 @@ Detailed screen placement and interaction design: [`docs/UI_UX_FEATURE_PLAN.md`]
 | [x] | Adaptive Cumulative ALI | Daily Activity Load Index implemented from worn-device activity samples. | Done |
 | [x] | Activity Distribution Tracking | Daily duration buckets implemented. | Done |
 | [x] | Personal Activity Baseline | Daily load compares with rolling personal baseline. | Done |
-| [ ] | Personalized Recovery Curve | Detect activity sessions and model return toward baseline. | 3 |
+| [~] | Personalized Recovery Curve | Reports daily activity values returning within personal range; session-level curve remains. | 3 |
 | [ ] | Recovery Pattern Change Detection | Compare current and historical recovery curves. | 3 |
 | [x] | Food Image Processing & Nutritional Breakdown | Photo analysis returns editable food, portion, calorie, and macro draft before save. | Done |
 | [x] | Portion-Size Estimation | Confidence-aware AI estimate and manual correction flow implemented. | Done |
-| [~] | Personalized Nutrition Learning | Contextual guidance exists; add saved meals and learned nutrition baseline. | 3 |
+| [~] | Personalized Nutrition Learning | Saved meal calories now feed an initial personal nutrition baseline; learned food-pattern guidance remains. | 3 |
 | [ ] | Confidence-Aware AI + Explanation | Return confidence, influencing records, and limitations with each insight. | 4 |
-| [~] | Health Data Quality Detector | Basic validation exists; add missing/noisy/duplicate/inconsistent-data report. | 1 |
+| [~] | Health Data Quality Detector | Analytics now reports duplicate dates, missing dates, noisy wearable records, and invalid hydration/nutrition values; broader cross-domain consistency rules remain. | 1 |
 | [~] | Sensor-Fusion Intelligence | Shared timeline aligns implemented domains and preserves date/time precision; add Phase 4 relationship quality gates. | 4 |
 | [x] | Counterfactual Health Insights | Clearly labeled what-if simulation compares original and hypothetical values without saving changes. | 5 |
 | [x] | Intervention Effectiveness Tracker | Interventions support tracked metrics, before/after windows, outcomes, reflections, and limitations. | 5 |
@@ -149,7 +149,7 @@ Detailed screen placement and interaction design: [`docs/UI_UX_FEATURE_PLAN.md`]
 | [x] | Specialist Selection & Saving | Preferred specialist can be saved to the authenticated profile. | 5 |
 | [x] | AI Health Summary Generator | Record selection, editable draft, approval, persistence, versions, and privacy wording implemented. | 5 |
 | [~] | mHealth Specialist Connection | Approved-summary handoff and contact action need final production integration validation. | 5 |
-| [~] | Temporal Pattern Analyzer | Date ranges and cycle intervals exist; add onset, duration, and persistence analysis. | 4 |
+| [~] | Temporal Pattern Analyzer | Adds symptom-record timing, average gaps, persistence span, and date ranges; richer onset/duration analysis remains. | 4 |
 | [ ] | Cross-Parameter Relationship Mapper | Add supported association calculations and visualization. | 4 |
 | [ ] | Sleep-Activity Interaction Analyzer | Align sleep periods with activity/ALI before and after sleep. | 4 |
 | [ ] | Nutrition-Physiology Association Engine | Compare saved nutrition with sleep, activity, heart rate, and cycle phase. | 4 |

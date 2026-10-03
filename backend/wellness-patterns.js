@@ -23,6 +23,35 @@ export function relationship(leftKey, rightKey, left, right) {
   return { leftKey, rightKey, available: true, coefficient: round(coefficient, 2), direction: coefficient > .1 ? 'move together' : coefficient < -.1 ? 'move in opposite directions' : 'show little linear relationship', strength, sampleSize: pairs.length, confidence: confidence(pairs.length), startDate: dates(left.filter(item => rightByDate.has(item.date)))[0], endDate: dates(left.filter(item => rightByDate.has(item.date))).at(-1), limitation: 'Association does not prove cause.' };
 }
 
+export function temporalPattern(items = []) {
+  const dates = items.map(item => item?.date).filter(Boolean).sort();
+  if (dates.length < 3) return { available: false, sampleSize: dates.length, limitation: 'At least 3 dated records are required.' };
+  const gaps = dates.slice(1).map((date, index) => Math.round((Date.parse(`${date}T00:00:00Z`) - Date.parse(`${dates[index]}T00:00:00Z`)) / 86400000));
+  return { available: true, sampleSize: dates.length, startDate: dates[0], endDate: dates.at(-1), averageGapDays: round(gaps.reduce((sum, value) => sum + value, 0) / gaps.length), persistenceDays: Math.max(...gaps), limitation: 'Timing does not establish cause.' };
+}
+
+const unavailable = (type, limitation) => ({ type, available: false, limitation });
+export function symptomSensorDiscrepancy(symptoms = [], baselines = []) {
+  const symptomDates = new Set(symptoms.filter(item => item.symptoms?.length).map(item => item.date));
+  const sensor = baselines.filter(item => item.current && item.confidence === 'established');
+  if (!sensor.length || !symptomDates.size) return unavailable('symptom-sensor-discrepancy', 'Symptoms and established sensor baselines are needed.');
+  const mismatches = sensor.filter(item => symptomDates.has(item.current.date) && item.status === 'within');
+  return { type: 'symptom-sensor-discrepancy', available: true, symptomDays: symptomDates.size, mismatchDays: mismatches.length, measures: mismatches.map(item => item.key), limitation: 'A mismatch does not invalidate either record.' };
+}
+
+export function recoveryCurve(activity = [], baselines = []) {
+  const normal = baselines.find(item => item.key === 'activityLoadIndex' && item.average != null);
+  const values = activity.filter(item => Number.isFinite(Number(item.value))).slice(-14);
+  if (!normal || values.length < 7) return unavailable('recovery-curve', 'An established activity baseline and 7 activity days are required.');
+  return { type: 'recovery-curve', available: true, baseline: normal.average, daysWithinRange: values.filter(item => Number(item.value) <= normal.high).length, sampleSize: values.length, limitation: 'Inferred from daily activity load, not clinical recovery.' };
+}
+
+export function digitalTwinSummary(baselines = []) {
+  const available = baselines.filter(item => item.current && item.average != null);
+  if (!available.length) return unavailable('digital-twin', 'Reliable current values and personal baselines are required.');
+  return { type: 'digital-twin', available: true, currentVsNormal: available.map(item => ({ key: item.key, label: item.label, current: item.current.value, normal: item.average, status: item.status, unit: item.unit })), sampleSize: available.length, limitation: 'Personal comparison only; not a medical reference.' };
+}
+
 export function buildPatterns({ baselines = [], series = {}, symptoms = [], quality = {} }) {
   const established = baselines.filter(item => item.confidence === 'established' && ['above', 'below'].includes(item.status));
   const insights = established.map(item => ({ id: `deviation-${item.key}`, type: 'deviation', title: `${item.label} is ${item.status} your usual range`, summary: `Current ${item.label.toLowerCase()} is ${item.current.value}${item.unit}; your recent personal range is ${item.low}–${item.high}${item.unit}.`, confidence: 'moderate', dateRange: { start: item.current.date, end: item.current.date }, inputs: [item.key], why: `Compared the current reliable daily value with ${item.reliableDays} prior reliable days.`, limitation: 'Personal ranges are informational and are not medical reference ranges.' }));
@@ -37,5 +66,6 @@ export function buildPatterns({ baselines = [], series = {}, symptoms = [], qual
     relationship('calories', 'sleepWellness', series.calories || [], series.sleepWellness || []),
     relationship('activityLoadIndex', 'heartRate', series.activityLoadIndex || [], series.heartRate || [])
   ];
-  return { generatedAt: new Date().toISOString(), algorithmVersion: 'patterns-1.0', insights, trends, relationships, quality, disclaimer: 'Informational pattern analysis only — not a diagnosis. Associations do not prove cause.' };
+  const temporal = temporalPattern(symptoms.filter(item => (item.symptoms || []).length));
+  return { generatedAt: new Date().toISOString(), algorithmVersion: 'patterns-1.2', insights, trends, relationships, temporal, quality, disclaimer: 'Informational pattern analysis only — not a diagnosis. Associations do not prove cause.' };
 }
