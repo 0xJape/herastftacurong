@@ -107,10 +107,10 @@ Detailed screen placement and interaction design: [`docs/UI_UX_FEATURE_PLAN.md`]
 
 ### Phase 5 — Goals, interventions, and care connection
 
-- [ ] Add goals and interventions with before/after periods and outcomes.
-- [ ] Rank suggestions only after feedback/outcome data exist.
-- [ ] Add clinic/doctor directory, matching, profiles, and saved specialist.
-- [ ] Add editable health-summary approval before contact handoff.
+- [x] Add goals and interventions with before/after periods and outcomes.
+- [x] Rank suggestions only after feedback/outcome data exist; show equal priority when evidence is insufficient.
+- [x] Add clinic/doctor directory, matching, profiles, and saved specialist.
+- [~] Add editable health-summary approval before contact handoff; draft, editing, approval, versions, and privacy controls exist, while production contact handoff remains.
 
 ## General HERA feature checklist
 
@@ -139,23 +139,23 @@ Detailed screen placement and interaction design: [`docs/UI_UX_FEATURE_PLAN.md`]
 | [ ] | Confidence-Aware AI + Explanation | Return confidence, influencing records, and limitations with each insight. | 4 |
 | [~] | Health Data Quality Detector | Basic validation exists; add missing/noisy/duplicate/inconsistent-data report. | 1 |
 | [~] | Sensor-Fusion Intelligence | Shared timeline aligns implemented domains and preserves date/time precision; add Phase 4 relationship quality gates. | 4 |
-| [ ] | Counterfactual Health Insights | Add clearly labeled simulation and original-versus-hypothetical result. | 5 |
-| [ ] | Intervention Effectiveness Tracker | Add interventions and before/after comparisons. | 5 |
-| [~] | Intervention Recommendation Ranking | Ordered nutrition guidance exists; add interventions, feedback, and outcome-based ranking. | 5 |
+| [x] | Counterfactual Health Insights | Clearly labeled what-if simulation compares original and hypothetical values without saving changes. | 5 |
+| [x] | Intervention Effectiveness Tracker | Interventions support tracked metrics, before/after windows, outcomes, reflections, and limitations. | 5 |
+| [x] | Intervention Recommendation Ranking | Suggestions rank only after sufficient feedback/outcome evidence; otherwise show equal priority. | 5 |
 | [x] | Multimodal Personalized Wellness Timeline | Account-scoped 7/30/90-day timeline covers cycle, check-ins, daily wearable/activity summaries, sleep, meals, hydration, and persisted sleep insight. | Done |
-| [ ] | Personalized Healthcare & Clinic Matching | Add need/location search and matching. | 5 |
-| [ ] | Personalized Clinic Profile | Add clinic data and profile UI. | 5 |
-| [ ] | Personalized Doctor Profile | Add doctor data, specialties, and comparison UI. | 5 |
-| [ ] | Specialist Selection & Saving | Save preferred specialist to authenticated profile. | 5 |
-| [~] | AI Health Summary Generator | Contextual assistant exists; add record selection, editable draft, approval, and persistence. | 5 |
-| [ ] | mHealth Specialist Connection | Show approved clinic contact method after summary approval. | 5 |
+| [x] | Personalized Healthcare & Clinic Matching | Need/location search and matching implemented for Region XII care data. | 5 |
+| [x] | Personalized Clinic Profile | Clinic data and profile UI implemented. | 5 |
+| [x] | Personalized Doctor Profile | Doctor data, specialties, and profile UI implemented. | 5 |
+| [x] | Specialist Selection & Saving | Preferred specialist can be saved to the authenticated profile. | 5 |
+| [x] | AI Health Summary Generator | Record selection, editable draft, approval, persistence, versions, and privacy wording implemented. | 5 |
+| [~] | mHealth Specialist Connection | Approved-summary handoff and contact action need final production integration validation. | 5 |
 | [~] | Temporal Pattern Analyzer | Date ranges and cycle intervals exist; add onset, duration, and persistence analysis. | 4 |
 | [ ] | Cross-Parameter Relationship Mapper | Add supported association calculations and visualization. | 4 |
 | [ ] | Sleep-Activity Interaction Analyzer | Align sleep periods with activity/ALI before and after sleep. | 4 |
 | [ ] | Nutrition-Physiology Association Engine | Compare saved nutrition with sleep, activity, heart rate, and cycle phase. | 4 |
 | [~] | Hydration Pattern Analysis | Daily totals and timeline history exist; personal pattern analysis remains Phase 4. | 4 |
 | [x] | Rest-Day Balance Tracking | Lower-load and high-load day balance compares with rolling activity baseline. | Done |
-| [ ] | Wellness Goal Progress Tracking | Add goals, targets, progress history, and prior-period comparison. | 5 |
+| [x] | Wellness Goal Progress Tracking | Goals, targets, progress history, status controls, and progress display implemented. | 5 |
 | [x] | Multi-Account User Profiles | Authenticated accounts, sessions, profiles, device ownership, and account-scoped APIs implemented. | Done |
 
 ## Sleep Dashboard feature checklist
