@@ -1,12 +1,18 @@
 import { DatabaseSync } from 'node:sqlite';
+import { randomBytes, scryptSync } from 'node:crypto';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const email=process.argv[2];
+const password=process.env.HERA_SEED_PASSWORD;
 if(!email)throw new Error('Usage: node seed-account.js email@example.com');
+if(password&&password.length<10)throw new Error('Password must be at least 10 characters');
 const db=new DatabaseSync(path.join(path.dirname(fileURLToPath(import.meta.url)),'hera.db'));
-const user=db.prepare('SELECT id,email FROM users WHERE email=? COLLATE NOCASE').get(email);
-if(!user)throw new Error(`Account not found: ${email}`);
+const passwordHash=value=>{const salt=randomBytes(16).toString('hex');return `${salt}:${scryptSync(value,salt,64).toString('hex')}`};
+let user=db.prepare('SELECT id,email FROM users WHERE email=? COLLATE NOCASE').get(email);
+if(!user&&!password)throw new Error(`Account not found: ${email}. Set HERA_SEED_PASSWORD to create it.`);
+if(!user){user=db.prepare('INSERT INTO users(name,email,password_hash,created_at) VALUES(?,?,?,?) RETURNING id,email').get('Alexa Memoria',email.toLowerCase(),passwordHash(password),new Date().toISOString())}
+else if(password)db.prepare('UPDATE users SET password_hash=? WHERE id=?').run(passwordHash(password),user.id);
 const day=offset=>{const date=new Date();date.setUTCHours(12,0,0,0);date.setUTCDate(date.getUTCDate()+offset);return date.toISOString().slice(0,10)};
 const at=(date,hour=20)=>`${date}T${String(hour).padStart(2,'0')}:00:00.000Z`;
 const sampleAt=(date,index)=>new Date(Date.parse(`${date}T08:00:00.000Z`)+index*30000).toISOString();
@@ -42,7 +48,7 @@ try{
   const energyGoal=goal.run(user.id,'Maintain daily energy','energy',4,'rating','at-least','active',start,end,created,created).lastInsertRowid;
   const hydrationGoal=goal.run(user.id,'Daily hydration','hydration',4,'rating','at-least','active',start,end,created,created).lastInsertRowid;
   for(let offset=-29;offset<=0;offset++){const date=day(offset),index=offset+29;progress.run(energyGoal,user.id,date,clamp(Math.round(3.4+Math.sin(index/4)*.8),1,5),note,at(date));progress.run(hydrationGoal,user.id,date,3+(index%4===0?1:0),note,at(date))}
-  const interventionId=intervention.run(user.id,'Consistent bedtime',note,JSON.stringify(['sleep','energy']),start,end,7,'completed',created,created).lastInsertRowid;
+  const interventionId=intervention.run(user.id,'Consistent bedtime',note,JSON.stringify(['sleep-wellness','wellness']),start,end,7,'completed',created,created).lastInsertRowid;
   for(const offset of [-21,-14,-7,0])feedback.run(interventionId,user.id,day(offset),offset<0?'helpful':'neutral',note,at(day(offset)));
   db.exec('COMMIT');
   console.log(JSON.stringify({email:user.email,userId:user.id,days:30,checkins:30,sleepRecords:30,waterDays:30,wearableReadings:3630,wearMinutesPerDay:60,meals:90,cycles:5,cycleIntervals:[28,29,28,28],goals:2,interventions:1}));

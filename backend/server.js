@@ -753,7 +753,7 @@ function interventionInput(body) {
   if (!Array.isArray(metrics) || !metrics.length || metrics.length > 4 || new Set(metrics).size !== metrics.length || metrics.some(metric => !interventionMetrics.has(metric))) return { error: 'metrics must contain 1 to 4 unique supported metrics' };
   if (!validDateOnly(startDate) || !validDateOnly(endDate) || endDate < startDate) return { error: 'startDate and endDate must be valid and ordered' };
   if (!Number.isInteger(comparisonWindowDays) || comparisonWindowDays < 3 || comparisonWindowDays > 30) return { error: 'comparisonWindowDays must be an integer from 3 to 30' };
-  return { value: { title, description, metrics, metricsJson: JSON.stringify(metrics), startDate, endDate, comparisonWindowDays } };
+  return { value: { title, description, metricsJson: JSON.stringify(metrics), startDate, endDate, comparisonWindowDays } };
 }
 const parseIntervention = row => ({ ...row, metrics: JSON.parse(row.metricsJson), metricsJson: undefined });
 app.get('/api/interventions', (req, res) => res.json({ interventions: getInterventions.all(req.user.id).map(row => ({ ...parseIntervention(row), feedback: getInterventionFeedback.all(row.id, req.user.id) })) }));
@@ -822,6 +822,15 @@ app.post('/api/health-summaries/drafts', (req, res) => {
   const parsed=summarySelection(req.body);if(parsed.error)return res.status(400).json({error:parsed.error});const value=parsed.value,summary=buildHealthSummary({...value,records:summaryRecords(req.user.id,value.startDate)}),now=new Date().toISOString();
   const result=createSummaryDraft.get({userId:req.user.id,domainsJson:JSON.stringify(value.domains),startDate:value.startDate,endDate:value.endDate,draftText:summary.text,structuredJson:JSON.stringify(summary),sourcesJson:JSON.stringify(summary.sources),specialistId:value.specialistId,now});
   res.status(201).json({draft:parseSummaryDraft(getSummaryDraft.get(result.id,req.user.id))});
+});
+app.post('/api/health-summaries/ai-drafts', async (req, res) => {
+  const parsed=summarySelection(req.body);if(parsed.error)return res.status(400).json({error:parsed.error});if(!process.env.GROQ_API_KEY)return res.status(503).json({error:'AI summary is not configured'});
+  const value=parsed.value,summary=buildHealthSummary({...value,records:summaryRecords(req.user.id,value.startDate)}),system='Rewrite supplied HERA record summary into concise, plain-language sections. Preserve every number and date exactly. Use only supplied facts. State missing data. Do not diagnose, prescribe, predict, infer causation, or add medical advice. End with: Informational wellness record only; not a diagnosis or medical assessment.';
+  try{
+    const response=await fetch('https://api.groq.com/openai/v1/chat/completions',{method:'POST',headers:{Authorization:`Bearer ${process.env.GROQ_API_KEY}`,'Content-Type':'application/json'},body:JSON.stringify({model:process.env.GROQ_MODEL||'openai/gpt-oss-20b',temperature:0.1,max_completion_tokens:1200,messages:[{role:'system',content:system},{role:'user',content:summary.text}]}),signal:AbortSignal.timeout(20000)});
+    if(!response.ok)return res.status(502).json({error:'AI summary is temporarily unavailable'});const draftText=(await response.json()).choices?.[0]?.message?.content?.trim().replace(/[*#`]/g,'');if(!draftText)return res.status(502).json({error:'AI service returned no summary'});
+    const now=new Date().toISOString(),result=createSummaryDraft.get({userId:req.user.id,domainsJson:JSON.stringify(value.domains),startDate:value.startDate,endDate:value.endDate,draftText,structuredJson:JSON.stringify(summary),sourcesJson:JSON.stringify(summary.sources),specialistId:value.specialistId,now});res.status(201).json({draft:parseSummaryDraft(getSummaryDraft.get(result.id,req.user.id))});
+  }catch(error){console.error('AI health summary failed:',error.message);res.status(502).json({error:'AI summary is temporarily unavailable'})}
 });
 app.put('/api/health-summaries/drafts/:id', (req, res) => {
   const id=Number(req.params.id),draftText=typeof req.body.draftText==='string'?req.body.draftText.trim():'',specialistId=req.body.specialistId==null?null:Number(req.body.specialistId);
