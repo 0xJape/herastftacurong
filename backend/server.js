@@ -11,6 +11,7 @@ import { addActivityBaseline, aggregateActivity } from './activity-analytics.js'
 import { buildWellnessTimeline } from './wellness-timeline.js';
 import { buildPersonalBaselines } from './personal-baseline.js';
 import { assessDataQuality } from './data-quality.js';
+import { importCareDirectory } from './care-import.js';
 import { buildPatterns, cyclePhaseSignature, digitalTwinSummary, nutritionPhysiologyAssociation, recoveryCurve, sleepActivityInteraction, symptomSensorDiscrepancy } from './wellness-patterns.js';
 import { summarizeGoal } from './goal-progress.js';
 import { buildInterventionOutcome } from './intervention-outcomes.js';
@@ -241,6 +242,7 @@ const clinicColumns = db.prepare('PRAGMA table_info(clinics)').all();
 for (const [name, type] of [['facility_type','TEXT'],['ownership','TEXT'],['provider_listing','TEXT'],['schedule','TEXT'],['accepts_new_patients','TEXT'],['latitude','REAL'],['longitude','REAL'],['coordinate_source','TEXT']]) {
   if (!clinicColumns.some(column => column.name === name)) db.exec(`ALTER TABLE clinics ADD COLUMN ${name} ${type}`);
 }
+importCareDirectory(db);
 const sensorColumns = db.prepare('PRAGMA table_info(sensor_readings)').all();
 if (!sensorColumns.some(column => column.name === 'user_id')) db.exec('ALTER TABLE sensor_readings ADD COLUMN user_id INTEGER');
 if (!sensorColumns.some(column => column.name === 'source')) db.exec("ALTER TABLE sensor_readings ADD COLUMN source TEXT NOT NULL DEFAULT 'wearable'");
